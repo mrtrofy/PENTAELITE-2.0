@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PENTATLÓN MODERNO – Panel Principal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.3/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    /* ── Custom styles ── */
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
+    .accordion-open    { max-height: 2000px; }
+
+    .card {
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(51,65,85,0.5);
+      backdrop-filter: blur(10px);
+    }
+
+    .input-dark {
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(51,65,85,0.7);
+      color: white;
+    }
+    .input-dark:focus { outline: none; border-color: rgb(59,130,246); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: white;
+      transition: all 0.2s;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1e40af, #1d4ed8);
+      transform: translateY(-1px);
+    }
+
+    .pts-value { font-size: 1rem; font-weight: 900; }
+
+    body {
+      background: #020617;
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .subview.hidden { display: none; }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { animation: spin 1s linear infinite; }
+
+    /* Nav tab active */
+    .nav-btn.active {
+      background: linear-gradient(135deg, #1d4ed8, #2563eb);
+      color: #fff;
+    }
+
+    /* Admin tab active */
+    .admin-tab-btn.active {
+      border-bottom: 2px solid #3b82f6;
+      color: #3b82f6;
+    }
+
+    /* Smooth opacity transition */
+    #app { transition: opacity 0.5s ease; }
+
+    /* Modal backdrop */
+    .modal-backdrop {
+      background: rgba(2,6,23,0.85);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Table row hover */
+    tbody tr:hover { background: rgba(30,58,138,0.2); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+
+<!-- ═══════════════════════════════════════════════════════════
+     BODY – oculto hasta que el JS lo muestre
+═══════════════════════════════════════════════════════════ -->
+<body style="display:none" class="min-h-screen">
+
+  <!-- ── Loading Overlay ── -->
+  <div id="loadingOverlay"
+       class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950">
+    <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full spinner mb-4"></div>
+    <p class="text-slate-400 text-sm tracking-widest uppercase">Cargando sistema…</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       APP ROOT
+  ══════════════════════════════════════════════════════════ -->
+  <div id="app" class="opacity-0">
+
+    <!-- ════════════════ HEADER ════════════════ -->
+    <header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur border-b border-slate-800 px-4 py-3">
+      <div class="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
+
+        <!-- Logo + badge -->
+        <div class="flex items-center gap-3">
+          <!-- SVG icon -->
+          <svg class="w-9 h-9 text-blue-500" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="24" cy="12" r="4"/>
+            <path d="M24 16 L18 32 M24 16 L30 32"/>
+            <path d="M12 20 L24 16 L36 20"/>
+            <path d="M18 32 L30 32"/>
+            <path d="M15 38 L18 32 M33 38 L30 32"/>
+          </svg>
+          <div>
+            <h1 class="text-lg font-black tracking-widest text-white leading-none">PENTATLÓN MODERNO</h1>
+            <p class="text-xs text-slate-400 tracking-wider">Sistema de Gestión de Competencias</p>
+          </div>
+          <!-- Admin badge -->
+          <span id="adminBadge"
+                class="hidden ml-2 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40 tracking-wider">
+            ADMIN
+          </span>
+        </div>
+
+        <!-- Header actions -->
+        <div class="flex items-center gap-2">
+          <button id="adminToggleBtn"
+                  onclick="toggleAdminMode()"
+                  class="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-700 text-slate-300
+                         hover:border-blue-500 hover:text-blue-400 transition-all">
+            Admin
+          </button>
+          <button onclick="logoutSession()"
+                  class="px-3 py-1.5 rounded-lg text-sm font-semibold border border-red-800/50 text-red-400
+                         hover:bg-red-900/20 transition-all">
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </header>
+    <!-- /HEADER -->
+
+    <!-- ════════════════ MAIN CONTENT ════════════════ -->
+    <main class="max-w-7xl mx-auto px-4 py-6 space-y-6">
+
+      <!-- ── VISTA PÚBLICA: Lista de Eventos ── -->
+      <section id="publicEventsList">
+        <div class="flex items-center justify-between mb-5">
+          <div>
+            <h2 class="text-2xl font-black tracking-widest text-white uppercase">Eventos Disponibles</h2>
+            <p class="text-slate-400 text-sm mt-1">Selecciona un evento para ver resultados</p>
+          </div>
+        </div>
+        <!-- JS llena este contenedor mediante renderEventsList() -->
+        <div id="eventsGrid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <!-- Cards inyectadas por renderEventsList() -->
+        </div>
+      </section>
+
+      <!-- ── VISTA RESULTADOS ── -->
+      <section id="resultsContainer" class="hidden space-y-5">
+
+        <!-- Back + title row -->
+        <div class="flex flex-wrap items-center gap-3">
+          <button onclick="document.getElementById('publicEventsList').classList.remove('hidden'); document.getElementById('resultsContainer').classList.add('hidden');"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold
+                         border border-slate-700 text-slate-300 hover:border-blue-500 hover:text-blue-400 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            Volver
+          </button>
+          <h2 id="viewTitle" class="text-xl font-black tracking-wider text-white flex-1 truncate"></h2>
+        </div>
+
+        <!-- Sub-navigation -->
+        <div class="card rounded-xl p-1 flex flex-wrap gap-1">
+          <button id="btnRank"
+                  class="nav-btn active flex-1 min-w-max px-4 py-2 rounded-lg text-sm font-bold tracking-wide transition-all">
+            🏆 Ranking
+          </button>
+          <button id="btnStat"
+                  class="nav-btn flex-1 min-w-max px-4 py-2 rounded-lg text-sm font-bold tracking-wide text-slate-400 hover:text-white transition-all">
+            🤺 Esgrima / Status
+          </button>
+          <button id="btnHandi"
+                  class="nav-btn flex-1 min-w-max px-4 py-2 rounded-lg text-sm font-bold tracking-wide text-slate-400 hover:text-white transition-all">
+            ⏱ Hándicap
+          </button>
+          <button id="btnTourney"
+                  class="nav-btn flex-1 min-w-max px-4 py-2 rounded-lg text-sm font-bold tracking-wide text-slate-400 hover:text-white transition-all">
+            🎯 Torneo
+          </button>
+          <button onclick="ejecutarDescargaSegunVista()"
+                  class="btn-primary flex-1 min-w-max px-4 py-2 rounded-lg text-sm font-bold tracking-wide">
+            ⬇ Descargar PDF
+          </button>
+        </div>
+
+        <!-- ── SubViews ── -->
+
+        <!-- 1. Ranking -->
+        <div id="rankingSubView" class="subview card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-800/60 text-slate-300 uppercase text-xs tracking-widest">
+                  <th class="px-4 py-3 text-left">#</th>
+                  <th class="px-4 py-3 text-left">Atleta</th>
+                  <th class="px-4 py-3 text-center">ESG</th>
+                  <th class="px-4 py-3 text-center">OBS</th>
+                  <th class="px-4 py-3 text-center">NAT</th>
+                  <th class="px-4 py-3 text-center">LASER</th>
+                  <th class="px-4 py-3 text-center font-black text-blue-400">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="scoreboardBody" class="divide-y divide-slate-800">
+                <!-- JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 2. Esgrima / Status -->
+        <div id="statusSubView" class="subview hidden card rounded-xl p-4">
+          <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+            Victorias / Derrotas – Esgrima
+          </h3>
+          <div id="statusGrid" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- JS -->
+          </div>
+        </div>
+
+        <!-- 3. Hándicap -->
+        <div id="handicapSubView" class="subview hidden card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-800/60 text-slate-300 uppercase text-xs tracking-widest">
+                  <th class="px-4 py-3 text-left">#</th>
+                  <th class="px-4 py-3 text-left">Atleta</th>
+                  <th class="px-4 py-3 text-center">Puntos</th>
+                  <th class="px-4 py-3 text-center">Salida</th>
+                </tr>
+              </thead>
+              <tbody id="handicapBody" class="divide-y divide-slate-800">
+                <!-- JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 4. Torneo (bracket) -->
+        <div id="tournamentSubView" class="subview hidden card rounded-xl p-4 overflow-x-auto">
+          <div id="tournamentBrackets" class="flex flex-row gap-6 min-w-max">
+            <!-- JS inserta columnas de llaves aquí -->
+          </div>
+        </div>
+
+        <!-- Vista Disciplinas (extra subview) -->
+        <div id="disciplinasSubView" class="subview hidden card rounded-xl overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead id="disciplinasHeader" class="bg-slate-800/60 text-slate-300 uppercase text-xs tracking-widest">
+                <!-- JS -->
+              </thead>
+              <tbody id="disciplinasBody" class="divide-y divide-slate-800">
+                <!-- JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+      <!-- /VISTA RESULTADOS -->
+
+      <!-- ══════════════════════════════════════════════════
+           PANEL ADMIN
+      ══════════════════════════════════════════════════ -->
+      <section id="adminPanel" class="hidden space-y-5">
+
+        <div class="flex items-center gap-3 mb-2">
+          <span class="text-2xl">⚙️</span>
+          <h2 class="text-2xl font-black tracking-widest text-white uppercase">Panel de Administración</h2>
+        </div>
+
+        <!-- Admin Tabs -->
+        <div class="card rounded-xl">
+          <div class="flex border-b border-slate-800 overflow-x-auto">
+            <button class="admin-tab-btn active px-5 py-3 text-sm font-bold tracking-wide whitespace-nowrap"
+                    onclick="showAdminTab('tabEventos', this)">
+              📅 Eventos
+            </button>
+            <button class="admin-tab-btn px-5 py-3 text-sm font-bold tracking-wide text-slate-400 hover:text-white whitespace-nowrap transition-all"
+                    onclick="showAdminTab('tabAtletas', this)">
+              🏃 Atletas
+            </button>
+            <button class="admin-tab-btn px-5 py-3 text-sm font-bold tracking-wide text-slate-400 hover:text-white whitespace-nowrap transition-all"
+                    onclick="showAdminTab('tabPruebas', this)">
+              📋 Registro de Pruebas
+            </button>
+          </div>
+
+          <!-- ── Tab: GESTIÓN DE EVENTOS ── -->
+          <div id="tabEventos" class="admin-tab-content p-5 space-y-5">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-blue-400">Gestión de Eventos</h3>
+            <div class="grid gap-4 md:grid-cols-3">
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Nombre del Evento</label>
+                <input id="eventName" type="text" placeholder="Ej. Copa Nacional 2026"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Fecha</label>
+                <input id="eventDate" type="date"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Descripción</label>
+                <input id="eventDesc" type="text" placeholder="Descripción breve"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+            </div>
+            <button onclick="saveEvent()"
+                    class="btn-primary px-5 py-2 rounded-lg text-sm font-bold">
+              💾 Guardar Evento
+            </button>
+
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Eventos registrados</h4>
+              <div id="adminEventsList" class="space-y-2">
+                <!-- JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Tab: GESTIÓN DE ATLETAS ── -->
+          <div id="tabAtletas" class="admin-tab-content hidden p-5 space-y-5">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <h3 id="atletaFormTitle" class="text-sm font-bold uppercase tracking-widest text-blue-400">
+                Gestión de Atletas
+              </h3>
+              <input id="atletaSearchInput"
+                     type="search"
+                     placeholder="🔍 Buscar atleta…"
+                     oninput="filterAtletasList()"
+                     class="input-dark px-3 py-2 rounded-lg text-sm w-64" />
+            </div>
+
+            <!-- Hidden edit id -->
+            <input id="editPlayerId" type="hidden" value="" />
+
+            <!-- Form grid -->
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+              <!-- Evento -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Evento</label>
+                <select id="playerEvent" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                </select>
+              </div>
+
+              <!-- Nombre -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Nombre del Atleta</label>
+                <input id="playerName" type="text" placeholder="Nombre completo"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Estado (Venezuela) -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Estado</label>
+                <select id="playerEstado" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>AMAZONAS</option>
+                  <option>ANZOÁTEGUI</option>
+                  <option>APURE</option>
+                  <option>ARAGUA</option>
+                  <option>BARINAS</option>
+                  <option>BOLÍVAR</option>
+                  <option>CARABOBO</option>
+                  <option>COJEDES</option>
+                  <option>DELTA AMACURO</option>
+                  <option>DISTRITO CAPITAL</option>
+                  <option>FALCÓN</option>
+                  <option>GUÁRICO</option>
+                  <option>LARA</option>
+                  <option>MÉRIDA</option>
+                  <option>MIRANDA</option>
+                  <option>MONAGAS</option>
+                  <option>NUEVA ESPARTA</option>
+                  <option>PORTUGUESA</option>
+                  <option>SUCRE</option>
+                  <option>TÁCHIRA</option>
+                  <option>TRUJILLO</option>
+                  <option>VARGAS</option>
+                  <option>YARACUY</option>
+                  <option>ZULIA</option>
+                </select>
+              </div>
+
+              <!-- Sexo -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Sexo</label>
+                <select id="playerSex" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="M">M</option>
+                  <option value="F">F</option>
+                  <option value="TODOS">TODOS</option>
+                </select>
+              </div>
+
+              <!-- Categoría -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Categoría</label>
+                <select id="playerCategory" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>U09</option>
+                  <option>U11</option>
+                  <option>U13</option>
+                  <option>U15</option>
+                  <option>U17</option>
+                  <option>U19</option>
+                  <option>Junior</option>
+                  <option>Senior</option>
+                  <option>JDN 2026</option>
+                </select>
+              </div>
+
+              <!-- Grupo -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Grupo</label>
+                <select id="playerGroup" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>A</option>
+                  <option>B</option>
+                  <option>C</option>
+                </select>
+              </div>
+
+              <!-- Fase -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Fase</label>
+                <select id="playerPhase" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>Clasificación</option>
+                  <option>Semifinal</option>
+                  <option>Final</option>
+                </select>
+              </div>
+
+              <!-- Esgrima V -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Esgrima V</label>
+                <input id="playerEsgrimaV" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Esgrima D -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Esgrima D</label>
+                <input id="playerEsgrimaD" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Esgrima Total -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Esgrima Total (pts)</label>
+                <input id="playerEsgrimaTotal" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Obstáculos -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Obstáculos (pts)</label>
+                <input id="playerObstaculos" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Natación -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Natación (pts)</label>
+                <input id="playerNatacion" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Laser -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Laser Run (pts)</label>
+                <input id="playerLaser" type="number" min="0" placeholder="0"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-3">
+              <button id="savePlayerBtn" onclick="savePlayer()"
+                      class="btn-primary px-5 py-2 rounded-lg text-sm font-bold">
+                💾 Guardar Atleta
+              </button>
+              <button id="cancelEditBtn" onclick="cancelEdit()"
+                      class="hidden px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all">
+                ✕ Cancelar
+              </button>
+            </div>
+
+            <!-- Atleta list -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Atletas registrados</h4>
+              <div id="adminAtletasList" class="space-y-2">
+                <!-- JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Tab: REGISTRO DE PRUEBAS ── -->
+          <div id="tabPruebas" class="admin-tab-content hidden p-5 space-y-5">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-blue-400">Registro de Pruebas</h3>
+
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+
+              <!-- Evento -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Evento</label>
+                <select id="adminEventSelect" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                </select>
+              </div>
+
+              <!-- Atleta -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Atleta</label>
+                <select id="adminAtletaSelect" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                </select>
+              </div>
+
+              <!-- Disciplina -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Disciplina</label>
+                <select id="adminDisciplina" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>Obstaculos Laser Run</option>
+                  <option>OCR 100</option>
+                  <option>OCR 400</option>
+                  <option>OCR 3 Km+</option>
+                </select>
+              </div>
+
+              <!-- Estado -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Estado</label>
+                <select id="adminEstado" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>AMAZONAS</option>
+                  <option>ANZOÁTEGUI</option>
+                  <option>APURE</option>
+                  <option>ARAGUA</option>
+                  <option>BARINAS</option>
+                  <option>BOLÍVAR</option>
+                  <option>CARABOBO</option>
+                  <option>COJEDES</option>
+                  <option>DELTA AMACURO</option>
+                  <option>DISTRITO CAPITAL</option>
+                  <option>FALCÓN</option>
+                  <option>GUÁRICO</option>
+                  <option>LARA</option>
+                  <option>MÉRIDA</option>
+                  <option>MIRANDA</option>
+                  <option>MONAGAS</option>
+                  <option>NUEVA ESPARTA</option>
+                  <option>PORTUGUESA</option>
+                  <option>SUCRE</option>
+                  <option>TÁCHIRA</option>
+                  <option>TRUJILLO</option>
+                  <option>VARGAS</option>
+                  <option>YARACUY</option>
+                  <option>ZULIA</option>
+                </select>
+              </div>
+
+              <!-- Género -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Género</label>
+                <select id="adminGenero" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option value="M">M</option>
+                  <option value="F">F</option>
+                  <option value="TODOS">TODOS</option>
+                </select>
+              </div>
+
+              <!-- Categoría -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Categoría</label>
+                <select id="adminCategoria" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>U09</option>
+                  <option>U11</option>
+                  <option>U13</option>
+                  <option>U15</option>
+                  <option>U17</option>
+                  <option>U19</option>
+                  <option>Junior</option>
+                  <option>Senior</option>
+                  <option>JDN 2026</option>
+                </select>
+              </div>
+
+              <!-- Fase -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Fase</label>
+                <select id="adminFase" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>Clasificación</option>
+                  <option>Semifinal</option>
+                  <option>Final</option>
+                </select>
+              </div>
+
+              <!-- Grupo -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Grupo</label>
+                <select id="adminGrupo" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+                  <option value="">— Seleccionar —</option>
+                  <option>A</option>
+                  <option>B</option>
+                  <option>C</option>
+                </select>
+              </div>
+
+              <!-- Tiempo Inicial -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Tiempo Inicial</label>
+                <input id="discTiempoInicial" type="text" placeholder="mm:ss.cc"
+                       oninput="autoCalculateFinalTime()"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm font-mono" />
+              </div>
+
+              <!-- Penalidad -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Penalidad (seg)</label>
+                <input id="discPenalidad" type="number" min="0" placeholder="0"
+                       oninput="autoCalculateFinalTime()"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+              </div>
+
+              <!-- Tiempo Final (readonly) -->
+              <div class="space-y-1">
+                <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Tiempo Final</label>
+                <input id="discTiempoFinal" type="text" readonly placeholder="Calculado automáticamente"
+                       class="input-dark w-full px-3 py-2 rounded-lg text-sm font-mono bg-slate-900/50 cursor-not-allowed" />
+              </div>
+
+            </div>
+
+            <button onclick="saveDisciplina()"
+                    class="btn-primary px-5 py-2 rounded-lg text-sm font-bold">
+              💾 Guardar Disciplina
+            </button>
+
+            <!-- Disciplinas List -->
+            <div>
+              <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Registros guardados</h4>
+              <div id="adminDiscList" class="space-y-2">
+                <!-- JS -->
+              </div>
+            </div>
+          </div>
+          <!-- /Tab Pruebas -->
+
+        </div>
+        <!-- /Admin card -->
+
+      </section>
+      <!-- /PANEL ADMIN -->
+
+    </main>
+    <!-- /MAIN -->
+
+  </div>
+  <!-- /APP ROOT -->
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL – Editar Registro de Disciplina
+  ══════════════════════════════════════════════════════ -->
+  <div id="editDiscModal"
+       class="fixed inset-0 z-50 hidden flex items-center justify-center"
+       style="background:rgba(0,0,0,0.75);backdrop-filter:blur(4px)">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-lg mx-4 shadow-2xl space-y-5">
+
+      <!-- Encabezado -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-black tracking-widest text-orange-400 uppercase">✏️ Editar Registro</h2>
+          <p id="editDiscAtletaLabel" class="text-xs text-slate-400 mt-0.5"></p>
+        </div>
+        <button onclick="closeEditDiscModal()"
+                class="text-slate-500 hover:text-white text-xl font-bold leading-none">✕</button>
+      </div>
+
+      <!-- Campo ID oculto -->
+      <input type="hidden" id="editDiscId" />
+
+      <div class="grid grid-cols-2 gap-4">
+
+        <!-- Nombre Atleta (solo lectura) -->
+        <div class="col-span-2 space-y-1">
+          <label class="text-xs text-slate-400 uppercase font-semibold">Atleta</label>
+          <input id="editDiscAtleta" type="text" readonly
+                 class="input-dark w-full px-3 py-2 rounded-lg text-sm font-bold text-white bg-slate-800 cursor-not-allowed opacity-70" />
+        </div>
+
+        <!-- Disciplina (solo lectura) -->
+        <div class="space-y-1">
+          <label class="text-xs text-slate-400 uppercase font-semibold">Disciplina</label>
+          <input id="editDiscDisciplina" type="text" readonly
+                 class="input-dark w-full px-3 py-2 rounded-lg text-sm bg-slate-800 cursor-not-allowed opacity-70" />
+        </div>
+
+        <!-- Estado -->
+        <div class="space-y-1">
+          <label class="text-xs text-orange-400 uppercase font-semibold">Estado del atleta</label>
+          <select id="editDiscEstado" class="input-dark w-full px-3 py-2 rounded-lg text-sm">
+            <option value="">— Normal —</option>
+            <option value="ELIMINADO">⛔ ELIMINADO</option>
+            <option value="DSQ">🚫 DSQ (Descalificado)</option>
+            <option value="DNF">🏃 DNF (No terminó)</option>
+            <option value="DNS">❌ DNS (No salió)</option>
+          </select>
+        </div>
+
+        <!-- Tiempo Inicial -->
+        <div class="space-y-1">
+          <label class="text-xs text-slate-400 uppercase font-semibold">Tiempo Inicial (m:s.ms)</label>
+          <input id="editDiscTiempoInicial" type="text" placeholder="0:00.00"
+                 oninput="autoCalculateEditDiscTime()"
+                 class="input-dark w-full px-3 py-2 rounded-lg text-sm font-mono" />
+        </div>
+
+        <!-- Penalidad -->
+        <div class="space-y-1">
+          <label class="text-xs text-slate-400 uppercase font-semibold">Penalidad (puntos)</label>
+          <input id="editDiscPenalidad" type="number" min="0" placeholder="0"
+                 oninput="autoCalculateEditDiscTime()"
+                 class="input-dark w-full px-3 py-2 rounded-lg text-sm" />
+        </div>
+
+        <!-- Tiempo Final (auto-calculado) -->
+        <div class="col-span-2 space-y-1">
+          <label class="text-xs text-slate-400 uppercase font-semibold">Tiempo Final</label>
+          <input id="editDiscTiempoFinal" type="text" readonly
+                 class="input-dark w-full px-3 py-2 rounded-lg text-sm font-mono font-bold bg-slate-800/50 cursor-not-allowed text-orange-300" />
+          <p class="text-[10px] text-slate-500">Se calcula automáticamente: Tiempo Inicial + (Penalidad × 25 seg)</p>
+        </div>
+
+      </div>
+
+      <!-- Botones -->
+      <div class="flex gap-3 pt-2">
+        <button onclick="saveDiscEdit()"
+                class="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-black uppercase text-sm py-2.5 rounded-xl transition">
+          💾 Guardar Cambios
+        </button>
+        <button onclick="closeEditDiscModal()"
+                class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold uppercase text-sm py-2.5 rounded-xl transition">
+          Cancelar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL – Login Admin
+  ══════════════════════════════════════════════════════ -->
+  <div id="loginModal"
+       class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+    <div class="card rounded-2xl p-8 w-full max-w-sm mx-4 space-y-5 shadow-2xl">
+      <div class="text-center">
+        <div class="text-4xl mb-2">🔐</div>
+        <h2 class="text-xl font-black tracking-widest text-white">Acceso Administrador</h2>
+        <p class="text-slate-400 text-sm mt-1">Ingresa la contraseña de administrador</p>
+      </div>
+      <div class="space-y-1">
+        <label class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Contraseña</label>
+        <input id="adminPass" type="password" placeholder="••••••••"
+               class="input-dark w-full px-4 py-3 rounded-xl text-sm"
+               onkeydown="if(event.key==='Enter') checkPassword()" />
+      </div>
+      <div class="flex gap-3">
+        <button onclick="checkPassword()"
+                class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-bold">
+          Ingresar
+        </button>
+        <button onclick="document.getElementById('loginModal').classList.add('hidden'); document.getElementById('loginModal').classList.remove('flex');"
+                class="flex-1 py-2.5 rounded-xl text-sm font-bold border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       MODAL – Advance Manager (gestión de avance de atletas)
+  ══════════════════════════════════════════════════════ -->
+  <div id="advanceManagerModal"
+       class="fixed inset-0 z-50 hidden items-center justify-center modal-backdrop">
+    <div class="card rounded-2xl w-full max-w-3xl mx-4 shadow-2xl overflow-hidden">
+
+      <!-- Modal header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800">
+        <h2 class="text-lg font-black tracking-widest text-white">⚡ Gestión de Avance</h2>
+        <button onclick="document.getElementById('advanceManagerModal').classList.add('hidden'); document.getElementById('advanceManagerModal').classList.remove('flex');"
+                class="text-slate-400 hover:text-white transition-colors text-xl leading-none">
+          ✕
+        </button>
+      </div>
+
+      <!-- Modal body: 2 columns -->
+      <div class="grid md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+
+        <!-- Col 1: Atletas disponibles -->
+        <div class="p-5 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Atletas</h3>
+          <div id="advanceAtletasList" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <!-- JS -->
+          </div>
+        </div>
+
+        <!-- Col 2: Destinos -->
+        <div class="p-5 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400">Destino / Fase</h3>
+          <div id="advanceDestinations" class="space-y-2">
+            <!-- JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal footer -->
+      <div class="px-6 py-4 border-t border-slate-800 flex justify-end">
+        <button onclick="document.getElementById('advanceManagerModal').classList.add('hidden'); document.getElementById('advanceManagerModal').classList.remove('flex');"
+                class="px-5 py-2 rounded-lg text-sm font-bold border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       Helper script for admin tabs (pure UI, no Firebase)
+  ══════════════════════════════════════════════════════ -->
+  <script>
+    /**
+     * Switch visible admin tab panel.
+     * @param {string} tabId  - id of the tab content div to show
+     * @param {HTMLElement} btn - clicked button element
+     */
+    function showAdminTab(tabId, btn) {
+      document.querySelectorAll('.admin-tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.admin-tab-btn').forEach(b => {
+        b.classList.remove('active', 'text-blue-400', 'border-b-2', 'border-blue-500');
+        b.classList.add('text-slate-400');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+      btn.classList.add('active');
+      btn.classList.remove('text-slate-400');
+    }
+
+    /**
+     * Show/hide loginModal using flex.
+     */
+    function openLoginModal() {
+      const m = document.getElementById('loginModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      setTimeout(() => document.getElementById('adminPass').focus(), 100);
+    }
+
+    /**
+     * Show/hide advanceManagerModal using flex.
+     */
+    function openAdvanceManagerModal() {
+      const m = document.getElementById('advanceManagerModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+  </script>
+
+  <!-- ══════════════════════════════════════════════════════
+       MAIN APP MODULE
+  ══════════════════════════════════════════════════════ -->
+  <script type="module" src="script.js"></script>
+
+</body>
+</html>
