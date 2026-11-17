@@ -80,12 +80,116 @@ let selectedAdvanceBtn = null;
 // ============================================================
 // INICIO: start()
 // ============================================================
+// ============================================================
+// AUTH: Listeners del formulario — se registran inmediatamente
+// (NO dentro de start() para que siempre funcionen)
+// ============================================================
+function setupAuthListeners() {
+    // Botón Google
+    const googleBtn = document.getElementById('googleBtn');
+    if (googleBtn) {
+        googleBtn.addEventListener('click', async () => {
+            if (!auth) return alert('Firebase aún no está listo. Espera un momento.');
+            googleBtn.disabled = true;
+            googleBtn.textContent = 'Conectando...';
+            try {
+                const provider = new GoogleAuthProvider();
+                await signInWithPopup(auth, provider);
+            } catch (err) {
+                const msgs = {
+                    'auth/popup-closed-by-user':  '❌ Cerraste la ventana antes de completar.',
+                    'auth/unauthorized-domain':   '❌ Dominio no autorizado.\nAgrégalo en Firebase Console → Authentication → Authorized domains.',
+                    'auth/operation-not-allowed': '❌ Google Sign-In no está habilitado en Firebase Console.',
+                    'auth/network-request-failed':'❌ Sin conexión a internet.',
+                };
+                alert(msgs[err.code] || 'Error Google: ' + err.message);
+            } finally {
+                googleBtn.disabled = false;
+                googleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+                    <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 2.9l6-6C34.4 3.1 29.5 1 24 1 14.8 1 7 6.7 3.7 14.6l7 5.4C12.4 13.5 17.7 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/>
+                    <path fill="#FBBC05" d="M10.7 28.5A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5l-7-5.4A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l7.5-5.8-.3-.4z"/>
+                    <path fill="#34A853" d="M24 47c5.5 0 10.1-1.8 13.4-4.9l-7.4-5.7c-1.8 1.2-4.1 2-6 2-6.3 0-11.6-4-13.5-9.5l-7.5 5.8C7 42.3 14.8 47 24 47z"/>
+                </svg> Continuar con Google`;
+            }
+        });
+    }
+
+    // Formulario email/password
+    const authForm = document.getElementById('authForm');
+    if (authForm) {
+        authForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!auth) return alert('Firebase aún no está listo. Espera un momento y vuelve a intentarlo.');
+
+            const email    = document.getElementById('email')?.value.trim() || '';
+            const password = document.getElementById('password')?.value || '';
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (!email || !password) return alert('Completa el correo y la contraseña.');
+
+            // Detectar modo: registro o login
+            const isRegister = window.authMode === 'register';
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = '⏳ Cargando...'; }
+
+            try {
+                if (isRegister) {
+                    await createUserWithEmailAndPassword(auth, email, password);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                // Si llegó aquí sin error → onAuthStateChanged maneja la redirección
+            } catch (err) {
+                const msgs = {
+                    'auth/user-not-found':       '❌ No existe cuenta con ese correo. ¿Quieres crear una cuenta nueva?',
+                    'auth/wrong-password':       '❌ Contraseña incorrecta. Inténtalo de nuevo.',
+                    'auth/invalid-credential':   '❌ Correo o contraseña incorrectos.',
+                    'auth/email-already-in-use': '❌ Ese correo ya está registrado. Inicia sesión.',
+                    'auth/weak-password':        '❌ La contraseña debe tener al menos 6 caracteres.',
+                    'auth/invalid-email':        '❌ El formato del correo no es válido.',
+                    'auth/too-many-requests':    '❌ Demasiados intentos fallidos. Espera unos minutos.',
+                    'auth/network-request-failed':'❌ Sin conexión a internet. Verifica tu red.',
+                    'auth/unauthorized-domain':  '❌ Este dominio no está autorizado en Firebase.\nVe a Firebase Console → Authentication → Settings → Authorized domains → Agregar tu dominio.',
+                    'auth/operation-not-allowed':'❌ El método Email/Password no está habilitado.\nVe a Firebase Console → Authentication → Sign-in method → Email/Password → Habilitar.',
+                };
+                showAuthError(msgs[err.code] || ('Error inesperado: ' + err.message));
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = isRegister ? 'Crear Cuenta' : 'Iniciar Sesión';
+                }
+            }
+        });
+    }
+}
+
+// Muestra error en pantalla (en vez de alert para mejor UX)
+function showAuthError(msg) {
+    let errEl = document.getElementById('authError');
+    if (!errEl) {
+        errEl = document.createElement('div');
+        errEl.id = 'authError';
+        errEl.style.cssText = 'margin-top:12px;padding:10px 14px;background:#450a0a;border:1px solid #991b1b;color:#fca5a5;border-radius:8px;font-size:13px;white-space:pre-line;line-height:1.5;';
+        const form = document.getElementById('authForm');
+        if (form) form.after(errEl);
+    }
+    errEl.textContent = msg;
+    errEl.style.display = 'block';
+    setTimeout(() => { if (errEl) errEl.style.display = 'none'; }, 8000);
+}
+
+// ============================================================
+// INICIO: start()
+// ============================================================
 async function start() {
-    // Fallback: mostrar el body siempre en máximo 3 segundos
-    // (evita pantalla en blanco si Firebase tarda o falla)
+    // Registrar listeners del formulario INMEDIATAMENTE (no esperar Firebase)
+    setupAuthListeners();
+
+    // Fallback: mostrar el body siempre en máximo 4 segundos
     const showBodyFallback = setTimeout(() => {
         document.body.style.display = 'block';
-    }, 3000);
+    }, 4000);
 
     try {
         firebaseApp = initializeApp(firebaseConfig);
@@ -93,10 +197,10 @@ async function start() {
         auth = getAuth(firebaseApp);
 
         onAuthStateChanged(auth, (user) => {
-            clearTimeout(showBodyFallback); // Firebase respondió, cancelar fallback
-            document.body.style.display = 'block'; // Mostrar body siempre
+            clearTimeout(showBodyFallback);
+            document.body.style.display = 'block';
             if (user) {
-                // Ocultar login, mostrar app
+                // Usuario autenticado
                 const authSection = document.getElementById('authSection');
                 const appEl = document.getElementById('app');
                 if (authSection) authSection.style.display = 'none';
@@ -104,89 +208,34 @@ async function start() {
                     appEl.style.display = 'block';
                     appEl.classList.remove('opacity-0');
                 }
-                document.body.style.display = 'block';
                 const overlay = document.getElementById('loadingOverlay');
                 if (overlay) overlay.style.display = 'none';
+                // Si hay formulario de login visible, redirigir a Penta.html
+                if (document.getElementById('authForm')) {
+                    window.location.replace('Penta.html');
+                    return;
+                }
                 setupListeners();
             } else {
-                // Redirigir a login si no está en index.html
+                // Sin usuario
                 const authSection = document.getElementById('authSection');
-                const appEl = document.getElementById('app');
                 if (authSection) {
-                    document.body.style.display = 'block';
+                    // Estamos en index.html → mostrar login
                     authSection.style.display = 'flex';
+                    const appEl = document.getElementById('app');
                     if (appEl) appEl.style.display = 'none';
                 } else {
-                    // Estamos en Penta.html sin usuario → redirigir
-                    window.location.href = 'index.html';
+                    // Estamos en Penta.html sin autenticar → volver a login
+                    window.location.replace('index.html');
                 }
             }
         });
 
-        // Auth de Google en index.html
-        const googleBtn = document.getElementById('googleBtn');
-        if (googleBtn) {
-            googleBtn.addEventListener('click', async () => {
-                try {
-                    const provider = new GoogleAuthProvider();
-                    await signInWithPopup(auth, provider);
-                } catch (err) {
-                    alert('Error con Google Sign-In: ' + err.message);
-                }
-            });
-        }
-
-        // Auth con email/password en index.html
-        const authForm = document.getElementById('authForm');
-        if (authForm) {
-            authForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('email').value.trim();
-                const password = document.getElementById('password').value;
-                // Leer modo desde variable global (seteada por switchTab en index.html)
-                const isRegister = window.authMode === 'register';
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Cargando...'; }
-                try {
-                    if (isRegister) {
-                        await createUserWithEmailAndPassword(auth, email, password);
-                    } else {
-                        await signInWithEmailAndPassword(auth, email, password);
-                    }
-                } catch (err) {
-                    // Traducir mensajes de error comunes de Firebase
-                    const msgs = {
-                        'auth/user-not-found':      '❌ No existe una cuenta con ese correo.',
-                        'auth/wrong-password':      '❌ Contraseña incorrecta.',
-                        'auth/invalid-credential':  '❌ Correo o contraseña incorrectos.',
-                        'auth/email-already-in-use':'❌ Ese correo ya está registrado.',
-                        'auth/weak-password':       '❌ La contraseña debe tener al menos 6 caracteres.',
-                        'auth/invalid-email':       '❌ El formato del correo no es válido.',
-                        'auth/too-many-requests':   '❌ Demasiados intentos. Espera unos minutos.',
-                        'auth/network-request-failed': '❌ Sin conexión a internet.',
-                        'auth/popup-closed-by-user':'❌ Ventana de Google cerrada antes de completar.',
-                        'auth/unauthorized-domain': '❌ Dominio no autorizado en Firebase.\nVe a Firebase Console → Authentication → Settings → Authorized domains\ny agrega "localhost".',
-                        'auth/operation-not-allowed': '❌ Método de inicio de sesión no habilitado en Firebase Console.',
-                    };
-                    const code = err.code || '';
-                    alert(msgs[code] || ('Error: ' + err.message));
-                } finally {
-                    if (submitBtn) {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = isRegister ? 'Crear Cuenta' : 'Iniciar Sesión';
-                    }
-                }
-            });
-        }
-
     } catch (err) {
         console.error('Error en start():', err);
         clearTimeout(showBodyFallback);
-        document.body.style.display = 'block'; // Mostrar aunque haya error
-        const errMsg = document.createElement('div');
-        errMsg.style.cssText = 'position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:#7f1d1d;color:white;padding:1rem 2rem;border-radius:8px;font-size:13px;z-index:9999;max-width:90vw;text-align:center;';
-        errMsg.textContent = '⚠️ Error de conexión con Firebase. Verifica tu internet y recarga la página.';
-        document.body.appendChild(errMsg);
+        document.body.style.display = 'block';
+        showAuthError('⚠️ Error al conectar con Firebase: ' + err.message);
     }
 }
 

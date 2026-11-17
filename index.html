@@ -3,240 +3,245 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SISTEMA PENTATLÓN MODERNO</title>
+  <title>PENTATLÓN MODERNO – Iniciar Sesión</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);
-      min-height: 100vh;
-    }
-    .glass-card {
-      background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(99, 102, 241, 0.2);
-    }
-    .tab-active {
-      background: linear-gradient(90deg, #3b82f6, #6366f1);
-      color: #fff;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-    }
-    .tab-inactive {
-      color: #94a3b8;
-      background: transparent;
-    }
-    .tab-inactive:hover {
-      color: #e2e8f0;
-      background: rgba(255,255,255,0.05);
-    }
-    .input-field {
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #e2e8f0;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-    .input-field:focus {
-      outline: none;
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-    }
-    .input-field::placeholder {
-      color: #475569;
-    }
-    .btn-primary {
-      background: linear-gradient(90deg, #3b82f6, #6366f1);
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
-    }
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-    .btn-google {
-      background: rgba(30, 41, 59, 0.8);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      color: #e2e8f0;
-      transition: transform 0.15s, background 0.2s, box-shadow 0.15s;
-    }
-    .btn-google:hover {
-      background: rgba(51, 65, 85, 0.9);
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    }
-    .btn-google:active {
-      transform: translateY(0);
-    }
-    .divider-line {
-      border-color: rgba(99, 102, 241, 0.2);
-    }
-    .sport-icon-glow {
-      filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.6));
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .fade-in {
-      animation: fadeIn 0.5s ease forwards;
-    }
+    body { background: linear-gradient(135deg,#020617 0%,#0f172a 60%,#1e1b4b 100%); min-height:100vh; }
+    .glass { background:rgba(15,23,42,.8); backdrop-filter:blur(16px); border:1px solid rgba(99,102,241,.2); }
+    .inp { background:rgba(30,41,59,.8); border:1px solid rgba(99,102,241,.3); color:#e2e8f0; transition:.2s; }
+    .inp:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.2); }
+    .inp::placeholder { color:#475569; }
+    .tab-on  { background:linear-gradient(90deg,#3b82f6,#6366f1); color:#fff; }
+    .tab-off { color:#94a3b8; }
+    .tab-off:hover { color:#e2e8f0; background:rgba(255,255,255,.05); }
+    .btn-main { background:linear-gradient(90deg,#3b82f6,#6366f1); transition:.15s; }
+    .btn-main:hover { transform:translateY(-1px); box-shadow:0 8px 25px rgba(99,102,241,.5); }
+    .btn-main:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .btn-g { background:rgba(30,41,59,.8); border:1px solid rgba(99,102,241,.3); transition:.15s; }
+    .btn-g:hover { background:rgba(51,65,85,.9); transform:translateY(-1px); }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:none} }
+    .fade-in { animation:fadeIn .5s ease forwards; }
+    #errBox { display:none; margin-top:12px; padding:10px 14px; background:#450a0a;
+              border:1px solid #991b1b; color:#fca5a5; border-radius:8px;
+              font-size:13px; white-space:pre-line; line-height:1.5; }
+    #okBox  { display:none; margin-top:12px; padding:10px 14px; background:#052e16;
+              border:1px solid #166534; color:#86efac; border-radius:8px; font-size:13px; }
   </style>
 </head>
-<body id="authSection" style="display:none" class="flex items-center justify-center min-h-screen p-4">
+<body class="flex items-center justify-center min-h-screen p-4">
 
-  <div class="glass-card rounded-2xl shadow-2xl w-full max-w-md p-8 fade-in">
+  <div class="glass rounded-2xl shadow-2xl w-full max-w-md p-8 fade-in">
 
-    <!-- Header / Logo -->
+    <!-- Logo -->
     <div class="flex flex-col items-center mb-8">
-      <!-- Sport icon SVG -->
-      <div class="sport-icon-glow mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="72" height="72" fill="none">
-          <!-- Runner body -->
-          <circle cx="40" cy="14" r="7" fill="#6366f1"/>
-          <!-- Torso/legs running pose -->
-          <line x1="40" y1="21" x2="40" y2="45" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
-          <!-- Left arm -->
-          <line x1="40" y1="30" x2="24" y2="38" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- Right arm (back) -->
-          <line x1="40" y1="30" x2="56" y2="24" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- Left leg forward -->
-          <line x1="40" y1="45" x2="26" y2="62" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- Right leg back -->
-          <line x1="40" y1="45" x2="54" y2="58" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- Left foot -->
-          <line x1="26" y1="62" x2="18" y2="66" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
-          <!-- Right foot -->
-          <line x1="54" y1="58" x2="62" y2="66" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
-          <!-- Star / award accent -->
-          <polygon points="68,6 70,12 76,12 71,16 73,22 68,18 63,22 65,16 60,12 66,12"
-                   fill="#fbbf24" opacity="0.9"/>
-        </svg>
-      </div>
-
-      <h1 class="text-2xl font-extrabold tracking-widest text-white uppercase text-center leading-tight">
-        PENTATLÓN MODERNO
-      </h1>
-      <p class="text-slate-400 text-sm mt-1 tracking-wider text-center">
-        Sistema de Gestión de Competencias
-      </p>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="68" height="68" fill="none"
+           style="filter:drop-shadow(0 0 12px rgba(99,102,241,.6))" class="mb-4">
+        <circle cx="40" cy="14" r="7" fill="#6366f1"/>
+        <line x1="40" y1="21" x2="40" y2="45" stroke="#6366f1" stroke-width="4" stroke-linecap="round"/>
+        <line x1="40" y1="30" x2="24" y2="38" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="40" y1="30" x2="56" y2="24" stroke="#3b82f6" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="40" y1="45" x2="26" y2="62" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="40" y1="45" x2="54" y2="58" stroke="#6366f1" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="26" y1="62" x2="18" y2="66" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
+        <line x1="54" y1="58" x2="62" y2="66" stroke="#818cf8" stroke-width="3" stroke-linecap="round"/>
+        <polygon points="68,6 70,12 76,12 71,16 73,22 68,18 63,22 65,16 60,12 66,12" fill="#fbbf24" opacity=".9"/>
+      </svg>
+      <h1 class="text-2xl font-extrabold tracking-widest text-white uppercase text-center">PENTATLÓN MODERNO</h1>
+      <p class="text-slate-400 text-sm mt-1 tracking-wider text-center">Sistema de Gestión de Competencias</p>
     </div>
 
     <!-- Tabs -->
     <div class="flex rounded-lg overflow-hidden mb-6 p-1 bg-slate-800/60">
-      <button id="tab-login"
-              class="flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-active"
-              onclick="switchTab('login')">
-        Iniciar Sesión
-      </button>
-      <button id="tab-register"
-              class="flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-inactive"
-              onclick="switchTab('register')">
-        Crear Cuenta
-      </button>
+      <button id="tabLogin"    class="flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-on"  onclick="setMode('login')">Iniciar Sesión</button>
+      <button id="tabRegister" class="flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-off" onclick="setMode('register')">Crear Cuenta</button>
     </div>
 
-    <!-- Auth Form -->
-    <form id="authForm" novalidate>
+    <!-- Mensajes -->
+    <div id="errBox"></div>
+    <div id="okBox"></div>
+
+    <!-- Formulario -->
+    <form id="authForm" onsubmit="handleSubmit(event)" novalidate>
       <div class="space-y-4">
-        <!-- Email -->
         <div>
-          <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-            Correo electrónico
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="correo@ejemplo.com"
-            required
-            autocomplete="email"
-            class="input-field w-full rounded-lg px-4 py-3 text-sm"
-          />
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Correo electrónico</label>
+          <input id="email" type="email" placeholder="correo@ejemplo.com" required autocomplete="email"
+                 class="inp w-full rounded-lg px-4 py-3 text-sm" />
         </div>
-
-        <!-- Password -->
         <div>
-          <label for="password" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
-            Contraseña
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="••••••••"
-            required
-            autocomplete="current-password"
-            class="input-field w-full rounded-lg px-4 py-3 text-sm"
-          />
+          <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Contraseña</label>
+          <input id="password" type="password" placeholder="••••••••" required autocomplete="current-password"
+                 class="inp w-full rounded-lg px-4 py-3 text-sm" />
         </div>
-
-        <!-- Submit -->
-        <button
-          type="submit"
-          id="submitBtn"
-          class="btn-primary w-full py-3 rounded-lg text-white font-bold text-sm uppercase tracking-wider mt-2">
+        <button type="submit" id="submitBtn"
+                class="btn-main w-full py-3 rounded-lg text-white font-bold text-sm uppercase tracking-wider mt-2">
           Iniciar Sesión
         </button>
       </div>
     </form>
 
-    <!-- Divider -->
+    <!-- Divisor -->
     <div class="flex items-center my-5 gap-3">
-      <hr class="flex-1 divider-line" />
+      <hr class="flex-1 border-indigo-900/40" />
       <span class="text-slate-500 text-xs uppercase tracking-widest">o continúa con</span>
-      <hr class="flex-1 divider-line" />
+      <hr class="flex-1 border-indigo-900/40" />
     </div>
 
-    <!-- Google Sign-In -->
-    <button id="googleBtn" type="button"
-            class="btn-google w-full flex items-center justify-center gap-3 py-3 rounded-lg font-semibold text-sm">
-      <!-- Google SVG icon -->
+    <!-- Google -->
+    <button id="googleBtn" type="button" onclick="handleGoogle()"
+            class="btn-g w-full flex items-center justify-center gap-3 py-3 rounded-lg font-semibold text-sm text-slate-200">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
         <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 2.9l6-6C34.4 3.1 29.5 1 24 1 14.8 1 7 6.7 3.7 14.6l7 5.4C12.4 13.5 17.7 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z" />
+        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/>
         <path fill="#FBBC05" d="M10.7 28.5A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5l-7-5.4A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l7.5-5.8-.3-.4z"/>
         <path fill="#34A853" d="M24 47c5.5 0 10.1-1.8 13.4-4.9l-7.4-5.7c-1.8 1.2-4.1 2-6 2-6.3 0-11.6-4-13.5-9.5l-7.5 5.8C7 42.3 14.8 47 24 47z"/>
-        <path fill="none" d="M0 0h48v48H0z"/>
       </svg>
       Continuar con Google
     </button>
 
-    <!-- Footer note -->
-    <p class="text-center text-slate-600 text-xs mt-6">
-      Sistema Pentatlón Moderno &copy; <span id="year"></span>
-    </p>
+    <p class="text-center text-slate-600 text-xs mt-6">Sistema Pentatlón Moderno &copy; <span id="yr"></span></p>
   </div>
 
-  <script>
-    // Set current year in footer
-    document.getElementById('year').textContent = new Date().getFullYear();
+<!-- ═══════════════════════════════════════════
+     Firebase + lógica de login — TODO INLINE
+     (no depende de script.js ni de módulos ES)
+═══════════════════════════════════════════ -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script>
+  document.getElementById('yr').textContent = new Date().getFullYear();
 
-    // Estado del formulario: 'login' o 'register'
-    window.authMode = 'login';
+  // ── Configuración Firebase ──────────────────────────────────
+  const fbConfig = {
+    apiKey:            "AIzaSyAtWCkDlZuv11AueTW6WEPNwAn97Vf-3yQ",
+    authDomain:        "pentatlon-scores.firebaseapp.com",
+    projectId:         "pentatlon-scores",
+    storageBucket:     "pentatlon-scores.firebasestorage.app",
+    messagingSenderId: "650229123946",
+    appId:             "1:650229123946:web:a3769c31f8ce1a23edb313"
+  };
 
-    // Tab switching — también actualiza window.authMode para que script.js lo lea
-    function switchTab(tab) {
-      window.authMode = tab;
-      const loginTab    = document.getElementById('tab-login');
-      const registerTab = document.getElementById('tab-register');
-      const submitBtn   = document.getElementById('submitBtn');
-      const pwdInput    = document.getElementById('password');
+  firebase.initializeApp(fbConfig);
+  const auth = firebase.auth();
 
-      if (tab === 'login') {
-        loginTab.className    = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-active';
-        registerTab.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-inactive';
-        submitBtn.textContent = 'Iniciar Sesión';
-        pwdInput.setAttribute('autocomplete', 'current-password');
-      } else {
-        registerTab.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-active';
-        loginTab.className    = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all duration-200 tab-inactive';
-        submitBtn.textContent = 'Crear Cuenta';
-        pwdInput.setAttribute('autocomplete', 'new-password');
-      }
+  // ── Estado del formulario ───────────────────────────────────
+  let currentMode = 'login'; // 'login' | 'register'
+
+  function setMode(mode) {
+    currentMode = mode;
+    const tL = document.getElementById('tabLogin');
+    const tR = document.getElementById('tabRegister');
+    const btn = document.getElementById('submitBtn');
+    const pwd = document.getElementById('password');
+    if (mode === 'login') {
+      tL.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-on';
+      tR.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-off';
+      btn.textContent = 'Iniciar Sesión';
+      pwd.autocomplete = 'current-password';
+    } else {
+      tR.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-on';
+      tL.className = 'flex-1 py-2.5 text-sm font-semibold rounded-md transition-all tab-off';
+      btn.textContent = 'Crear Cuenta';
+      pwd.autocomplete = 'new-password';
     }
-  </script>
+    hideMessages();
+  }
 
-  <script type="module" src="script.js"></script>
+  // ── Mensajes ────────────────────────────────────────────────
+  function showErr(msg) {
+    const b = document.getElementById('errBox');
+    b.textContent = msg; b.style.display = 'block';
+    document.getElementById('okBox').style.display = 'none';
+  }
+  function showOk(msg) {
+    const b = document.getElementById('okBox');
+    b.textContent = msg; b.style.display = 'block';
+    document.getElementById('errBox').style.display = 'none';
+  }
+  function hideMessages() {
+    document.getElementById('errBox').style.display = 'none';
+    document.getElementById('okBox').style.display  = 'none';
+  }
+
+  // ── Traducción de errores Firebase ─────────────────────────
+  const ERR = {
+    'auth/user-not-found':        '❌ No existe cuenta con ese correo. ¿Quieres Crear Cuenta?',
+    'auth/wrong-password':        '❌ Contraseña incorrecta. Inténtalo de nuevo.',
+    'auth/invalid-credential':    '❌ Correo o contraseña incorrectos.',
+    'auth/email-already-in-use':  '❌ Ese correo ya está registrado. Inicia sesión.',
+    'auth/weak-password':         '❌ La contraseña debe tener al menos 6 caracteres.',
+    'auth/invalid-email':         '❌ El formato del correo no es válido.',
+    'auth/too-many-requests':     '❌ Demasiados intentos. Espera unos minutos e intenta de nuevo.',
+    'auth/network-request-failed':'❌ Sin conexión a internet. Verifica tu red.',
+    'auth/unauthorized-domain':   '❌ Dominio no autorizado en Firebase.\nAgrega este dominio en: Firebase Console → Authentication → Settings → Authorized domains.',
+    'auth/operation-not-allowed': '❌ Inicio de sesión no habilitado.\nActiva Email/Password en Firebase Console → Authentication → Sign-in method.',
+    'auth/popup-closed-by-user':  '❌ Cerraste la ventana de Google antes de completar.',
+    'auth/popup-blocked':         '❌ El navegador bloqueó la ventana emergente de Google. Permite popups para este sitio.',
+  };
+
+  function fbErr(err) {
+    return ERR[err.code] || ('Error (' + (err.code || 'desconocido') + '): ' + err.message);
+  }
+
+  // ── Envío del formulario ────────────────────────────────────
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn      = document.getElementById('submitBtn');
+
+    if (!email)    return showErr('❌ Escribe tu correo electrónico.');
+    if (!password) return showErr('❌ Escribe tu contraseña.');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Cargando...';
+    hideMessages();
+
+    try {
+      if (currentMode === 'register') {
+        await auth.createUserWithEmailAndPassword(email, password);
+        showOk('✅ Cuenta creada. Entrando al sistema...');
+      } else {
+        await auth.signInWithEmailAndPassword(email, password);
+        showOk('✅ Acceso correcto. Cargando...');
+      }
+      // onAuthStateChanged redirigirá automáticamente
+    } catch (err) {
+      showErr(fbErr(err));
+      btn.disabled = false;
+      btn.textContent = currentMode === 'register' ? 'Crear Cuenta' : 'Iniciar Sesión';
+    }
+  }
+
+  // ── Google Sign-In ──────────────────────────────────────────
+  async function handleGoogle() {
+    const btn = document.getElementById('googleBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Conectando con Google...';
+    hideMessages();
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+    } catch (err) {
+      showErr(fbErr(err));
+      btn.disabled = false;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="20" height="20">
+        <path fill="#EA4335" d="M24 9.5c3.1 0 5.9 1.1 8.1 2.9l6-6C34.4 3.1 29.5 1 24 1 14.8 1 7 6.7 3.7 14.6l7 5.4C12.4 13.5 17.7 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.4 5.7c4.3-4 6.8-9.9 6.8-16.9z"/>
+        <path fill="#FBBC05" d="M10.7 28.5A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5l-7-5.4A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.7l7.5-5.8-.3-.4z"/>
+        <path fill="#34A853" d="M24 47c5.5 0 10.1-1.8 13.4-4.9l-7.4-5.7c-1.8 1.2-4.1 2-6 2-6.3 0-11.6-4-13.5-9.5l-7.5 5.8C7 42.3 14.8 47 24 47z"/>
+      </svg> Continuar con Google`;
+    }
+  }
+
+  // ── Redirección automática cuando hay sesión ─────────────────
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      showOk('✅ Sesión activa. Cargando panel...');
+      setTimeout(() => { window.location.href = 'Penta.html'; }, 800);
+    }
+  });
+</script>
+
 </body>
 </html>
